@@ -84,6 +84,10 @@ int main(int argc, char *argv[])
         cout << "open codec failed" << endl;
         return -1;
     }
+
+    // AVCodecContext * ac = AFCtx_p->streams[1]->codecpar;
+    // AVCodec * acc = AFCtx_p->video_codec;
+    
     // 裁剪图像
     img_convert_ctx = sws_getContext(ACCtx_p->width, ACCtx_p->height,
                                      ACCtx_p->pix_fmt,

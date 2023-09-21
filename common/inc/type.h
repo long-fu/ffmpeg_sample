@@ -41,17 +41,17 @@ struct Resolution
     uint32_t height = 0;
 };
 
-struct Rect
-{
-    uint32_t ltX = 0;
-    uint32_t ltY = 0;
-    uint32_t rbX = 0;
-    uint32_t rbY = 0;
-};
+// struct Rect
+// {
+//     uint32_t ltX = 0;
+//     uint32_t ltY = 0;
+//     uint32_t rbX = 0;
+//     uint32_t rbY = 0;
+// };
 
-struct BBox
-{
-    Rect rect;
-    uint32_t score = 0;
-    std::string text;
-};
+// struct BBox
+// {
+//     Rect rect;
+//     uint32_t score = 0;
+//     std::string text;
+// };
