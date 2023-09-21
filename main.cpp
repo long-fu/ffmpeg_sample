@@ -6,8 +6,10 @@
 #include "NvEncoderCLIOptions.h"
 #include "NvEncoderCuda.h"
 #include "FFmpegEncoded.h"
+#include "drawing.h"
+#include "utils.h"
 simplelogger::Logger *logger = simplelogger::LoggerFactory::CreateConsoleLogger();
-
+using namespace std;
 typedef int (*NvEncodeCallBack)(void *callback_param, uint8_t *packet, int packet_size);
 
 typedef struct _UserData
@@ -123,11 +125,11 @@ int FFmpegDecoderFrameProcessCallBack(void *callback_param, void *frame_data,
                                       int frame_size)
 {
     static int index = 0;
-    std::string szOutFilePath = "../out/out_" + std::to_string(index) + ".yuv";
-    index++;
-    std::ofstream fpOut(szOutFilePath, std::ios::out | std::ios::binary);
-    
-    UserData *user_data = (UserData *) callback_param;
+    // std::string szOutFilePath = "../out/out_" + std::to_string(index) + ".yuv";
+    // index++;
+    // std::ofstream fpOut(szOutFilePath, std::ios::out | std::ios::binary);
+
+    UserData *user_data = (UserData *)callback_param;
     NvDecoder *dec = user_data->dec;
     NvEncoder *enc = user_data->enc;
     CUcontext cuContext = user_data->cuContext1;
@@ -153,51 +155,68 @@ int FFmpegDecoderFrameProcessCallBack(void *callback_param, void *frame_data,
         std::cout << "des: " << dec->GetWidth() << " === " << dec->GetDecodeWidth() << std::endl;
         if (dec->GetWidth() == dec->GetDecodeWidth())
         {
-            std::vector<std::vector<uint8_t>> vPacket;
+            void *tempData = new uint8_t[dec->GetFrameSize()];
+            memcpy(tempData,pFrame,dec->GetFrameSize());
+        
             // fpOut.write(reinterpret_cast<char *>(pFrame), dec->GetFrameSize());
+            ImageData image;
+            image.height = dec->GetHeight();
+            image.width = dec->GetWidth();
+            image.size = dec->GetFrameSize();
+            image.data = SHARED_PTR_U8_BUF(tempData);            
+            // std::shared_ptr<uint8_t> imageData = std::make_shared<uint8_t>();
+            // imageData.reset(pFrame);
+            // image.data = imageData;
+
+            YUVColor color = YUVColor(0, 0, 144);
+            
+            DrawRect(image, 20, 20, 1280 - 40, 720 - 40, color, 5);
+
+            // fpOut.write(reinterpret_cast<char *>(image.data.get()), image.size);
+
+            std::vector<std::vector<uint8_t>> vPacket;
             std::cout << "GetFrameSize " << dec->GetFrameSize() << " " << enc->GetFrameSize() << std::endl;
             const NvEncInputFrame *encoderInputFrame = enc->GetNextInputFrame();
-            NvEncoderCuda::CopyToDeviceFrame(cuContext, pFrame, 0, (CUdeviceptr)encoderInputFrame->inputPtr,
-                                                                (int)encoderInputFrame->pitch,
-                                                                enc->GetEncodeWidth(),
-                                                                enc->GetEncodeHeight(),
-                                                                CU_MEMORYTYPE_HOST,
-                                                                encoderInputFrame->bufferFormat,
-                                                                encoderInputFrame->chromaOffsets,
-                                                                encoderInputFrame->numChromaPlanes);
+            NvEncoderCuda::CopyToDeviceFrame(cuContext, image.data.get(), 0, (CUdeviceptr)encoderInputFrame->inputPtr,
+                                             (int)encoderInputFrame->pitch,
+                                             enc->GetEncodeWidth(),
+                                             enc->GetEncodeHeight(),
+                                             CU_MEMORYTYPE_HOST,
+                                             encoderInputFrame->bufferFormat,
+                                             encoderInputFrame->chromaOffsets,
+                                             encoderInputFrame->numChromaPlanes);
             enc->EncodeFrame(vPacket);
 
             for (std::vector<uint8_t> &packet : vPacket)
             {
                 // packet.data();
                 // packet.size();
-                std::cout << "packet: " << packet.size() ;
-                encder->Process(packet.data(),packet.size());
+                std::cout << "packet: " << packet.size();
+                encder->Process(packet.data(), packet.size());
                 // callBack(userData, packet.data(), (int)packet.size());
             }
             std::cout << std::endl;
         }
         else
         {
+            std::cout << "=====================================================" << std::endl;
             // 需要进行字节填充
             // 4:2:0 output width is 2 byte aligned. If decoded width is odd , luma has 1 pixel padding
             // Remove padding from luma while dumping it to disk
             // dump luma
-            for (auto i = 0; i < dec->GetHeight(); i++)
-            {
-                fpOut.write(reinterpret_cast<char *>(pFrame), dec->GetDecodeWidth() * dec->GetBPP());
-                pFrame += dec->GetWidth() * dec->GetBPP();
-            }
-            // dump Chroma
-            fpOut.write(reinterpret_cast<char *>(pFrame), dec->GetChromaPlaneSize());
+            // for (auto i = 0; i < dec->GetHeight(); i++)
+            // {
+            //     fpOut.write(reinterpret_cast<char *>(pFrame), dec->GetDecodeWidth() * dec->GetBPP());
+            //     pFrame += dec->GetWidth() * dec->GetBPP();
+            // }
+            // // dump Chroma
+            // fpOut.write(reinterpret_cast<char *>(pFrame), dec->GetChromaPlaneSize());
         }
     }
     nFrame += nFrameReturned;
 
     return 0;
 }
-
-
 
 int main(int, char **)
 {
@@ -237,7 +256,7 @@ int main(int, char **)
 
     FFmpegEncoder encoder;
     encoder.Init("rtmp://192.168.2.4:1935/live", 720, 1280, 25, AV_PIX_FMT_NV12);
-    
+
     CUcontext cuContext1 = NULL;
     ck(cuCtxCreate(&cuContext1, 0, cuDevice));
 
