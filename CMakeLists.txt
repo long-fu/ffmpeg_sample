@@ -5,6 +5,11 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(CMAKE_INSTALL_PREFIX .)
+
+find_library(CUVID_LIB nvcuvid)
+find_library(NVENCODEAPI_LIB nvidia-encode)
+
 include(CTest)
 enable_testing()
 
@@ -27,11 +32,14 @@ include_directories(
     /usr/include/freetype2
     nvidia/inc
     nvidia/NvDecoder
+    nvidia/NvEncoder
     nvidia/Utils
 )
 
 add_executable(main
+    nvidia/NvEncoder/NvEncoder.cpp
     nvidia/NvDecoder/NvDecoder.cpp
+    nvidia/NvEncoder/NvEncoderCuda.cpp
     common/src/drawing.cpp
     src/FFmpegDecoder.cpp
 
@@ -56,15 +64,8 @@ target_link_libraries(main
     ${CUDA_CUDA_LIBRARY}
     ${CMAKE_DL_LIBS}
 
-    # ${NVENCODEAPI_LIB}
-    ${CUVID_LIB}
-
-    # ${AVCODEC_LIB}
-    # ${AVFORMAT_LIB}
-    # ${AVUTIL_LIB}
-    # ${SWRESAMPLE_LIB}
-    ${CMAKE_SOURCE_DIR}/nvidia/lib/libnvcuvid.so
-    ${CMAKE_SOURCE_DIR}/nvidia/lib/libnvidia-encode.so
+    ${CMAKE_CURRENT_SOURCE_DIR}/nvidia/lib/libnvcuvid.so
+    ${CMAKE_CURRENT_SOURCE_DIR}/nvidia/lib/libnvidia-encode.so
 )
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
