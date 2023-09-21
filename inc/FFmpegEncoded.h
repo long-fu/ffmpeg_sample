@@ -13,9 +13,9 @@ extern "C" {
 using Duration = std::chrono::duration<double, std::ratio<1>>;
 using TimePoint = std::chrono::time_point<std::chrono::steady_clock>;
 
-class FFmpegEncoded {
+class FFmpegEncoder {
 public:
-  FFmpegEncoded() = default;
+  FFmpegEncoder() = default;
 
   int Init(std::string name, int img_h, int img_w, int frame_rate = 20,
            int pic_fmt = AV_PIX_FMT_NV12);

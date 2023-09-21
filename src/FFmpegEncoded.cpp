@@ -21,7 +21,7 @@ static std::string GuessFormatFromName(const std::string &name) {
   return format;
 }
 
-int FFmpegEncoded::Init(std::string name, int img_h, int img_w, int frame_rate,
+int FFmpegEncoder::Init(std::string name, int img_h, int img_w, int frame_rate,
                        int pic_fmt) {
   AVRational av_framerate;
   av_framerate.num = frame_rate;
@@ -29,7 +29,7 @@ int FFmpegEncoded::Init(std::string name, int img_h, int img_w, int frame_rate,
   return Init(name, img_h, img_w, av_framerate, pic_fmt);
 }
 
-int FFmpegEncoded::Init(std::string name, int img_h, int img_w,
+int FFmpegEncoder::Init(std::string name, int img_h, int img_w,
                        AVRational frame_rate, int pic_fmt) {
   last_sent_tp = std::chrono::steady_clock::now();
   interval = Duration((double)frame_rate.den / frame_rate.num);
@@ -152,13 +152,13 @@ int FFmpegEncoded::Init(std::string name, int img_h, int img_w,
   return 0;
 }
 
-bool FFmpegEncoded::IsValid() { return valid; }
+bool FFmpegEncoder::IsValid() { return valid; }
 
-void FFmpegEncoded::Process(const uint8_t *pdata) {
+void FFmpegEncoder::Process(const uint8_t *pdata) {
   SendFrame(pdata);
 }
 
-void FFmpegEncoded::Wait4Stream() {
+void FFmpegEncoder::Wait4Stream() {
   if (!output_is_file) {
     // if output is not file, e.g. RTSP or RTMP
     // we must not send too fast
@@ -174,7 +174,7 @@ void FFmpegEncoded::Wait4Stream() {
   }
 }
 
-void FFmpegEncoded::SendFrame(const uint8_t *pdata) {
+void FFmpegEncoder::SendFrame(const uint8_t *pdata) {
   Wait4Stream();
 //   APP_PROFILE(FFMPEGOutput::SendFrame);
   int ret = 0;
@@ -221,13 +221,15 @@ static void dontfree(void *opaque, uint8_t *data) {
   // tell ffmpeg dont free data
 }
 
-static void custom_free(void *opaque, uint8_t *data) { free(data); }
+static void custom_free(void *opaque, uint8_t *data) { 
+  // free(data);
+}
 
-void FFmpegEncoded::Process(void *pdata, int size) {
+void FFmpegEncoder::Process(void *pdata, int size) {
   SendEncodedFrame(pdata, size);
 }
 
-void FFmpegEncoded::SendEncodedFrame(void *pdata, int size) {
+void FFmpegEncoder::SendEncodedFrame(void *pdata, int size) {
   Wait4Stream();
 //   APP_PROFILE(FFMPEGOutput::SendEncodedFrame);
   int ret = 0;
@@ -259,7 +261,7 @@ void FFmpegEncoded::SendEncodedFrame(void *pdata, int size) {
   video_frame->pts += av_rescale_q(1, video_avcc->time_base, avs->time_base);
 }
 
-void FFmpegEncoded::Close() {
+void FFmpegEncoder::Close() {
   if (encoder_avfc) {
     av_write_trailer(encoder_avfc);
     if (!(encoder_avfc->flags & AVFMT_NOFILE)) {

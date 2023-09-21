@@ -40,9 +40,11 @@ add_executable(main
     nvidia/NvEncoder/NvEncoder.cpp
     nvidia/NvDecoder/NvDecoder.cpp
     nvidia/NvEncoder/NvEncoderCuda.cpp
-    common/src/drawing.cpp
+    
     src/FFmpegDecoder.cpp
+    src/FFmpegEncoded.cpp
 
+    common/src/drawing.cpp
     common/src/freetype_helper.cpp
     common/src/utils.cpp
 
