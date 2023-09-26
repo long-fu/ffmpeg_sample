@@ -148,6 +148,7 @@ int FFmpegDecoderFrameProcessCallBack(void *callback_param, void *frame_data,
     for (int i = 0; i < nFrameReturned; i++)
     {
         pFrame = dec->GetFrame();
+        dec->GetOutputFormat();
         // if (bOutPlanar && bDecodeOutSemiPlanar) {
         //     ConvertSemiplanarToPlanar(pFrame, dec->GetWidth(), dec->GetHeight(), dec->GetBitDepth());
         // }
@@ -155,7 +156,7 @@ int FFmpegDecoderFrameProcessCallBack(void *callback_param, void *frame_data,
         std::cout << "des: " << dec->GetWidth() << " === " << dec->GetDecodeWidth() << std::endl;
         if (dec->GetWidth() == dec->GetDecodeWidth())
         {
-            void *tempData = new uint8_t[dec->GetFrameSize()];
+            uint8_t *tempData = new uint8_t[dec->GetFrameSize()];
             memcpy(tempData,pFrame,dec->GetFrameSize());
         
             // fpOut.write(reinterpret_cast<char *>(pFrame), dec->GetFrameSize());
@@ -168,10 +169,10 @@ int FFmpegDecoderFrameProcessCallBack(void *callback_param, void *frame_data,
             // imageData.reset(pFrame);
             // image.data = imageData;
 
-            YUVColor color = YUVColor(0, 0, 144);
+            YUVColor color = YUVColor(255,0,0);
             
             DrawRect(image, 20, 20, 1280 - 40, 720 - 40, color, 5);
-
+            DrawText(image, 20, 20, "people", color);
             // fpOut.write(reinterpret_cast<char *>(image.data.get()), image.size);
 
             std::vector<std::vector<uint8_t>> vPacket;

@@ -120,6 +120,14 @@ private:
 
 void SetPixel(ImageData &image, int x, int y, const YUVColor &color)
 {
+    // int ty = image.width * y + x;
+    // *(image.data.get() + ty) = color.y;
+
+    // int u = image.width * image.height * 5 / 4 + (y / 2 * image.width / 2 + x / 2);
+    // *(image.data.get() + u) = color.u;
+    // int v = image.width * image.height + (y / 2 * image.width / 2 + x / 2);
+    // *(image.data.get() + v) = color.v;
+
     *(image.data.get() + y * image.width + x) = color.y;
     uint8_t *uv_offset = image.data.get() + image.width * image.height + (y / 2) * image.width + x / 2 * 2;
     uv_offset[0] = color.u;
